@@ -509,6 +509,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Last Updated**: 30-11-2025
 
-**Maintained by**: HADJI Oussama - University of Batna 2, Departement of Computer Science, Constantine Route. Fésdis, 05078 (Batna, Algeria)
-                   MAIMOUR Moufida - Université de Lorraine, CNRS, CRAN, F-54000 (Nancy, France)
+**Maintained by**: 
+   - HADJI Oussama - University of Batna 2, Departement of Computer Science, Constantine Route. Fésdis, 05078 (Batna, Algeria) - ou.hadji@univ-batna2.dz
+   - MAIMOUR Moufida - Université de Lorraine, CNRS, CRAN, F-54000 (Nancy, France) - moufida.maimour@univ-lorraine.fr
 
