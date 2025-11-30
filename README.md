@@ -1,6 +1,6 @@
 # VidSim - Video Coding & Quality Analysis Framework
 
-VidSim is an advanced research framework for region-of-interest (ROI) video coding, quality assessment, and visualization. The system provides both a GUI and batch/CLI interfaces for video simulation experiments, supporting flexible encoding strategies, comprehensive quality metrics, and detailed analysis tools.
+VidSim is an advanced research framework for region-of-interest (ROI) video coding, quality assessment, and visualization. The system provides both a GUI interface for video simulation experiments, supporting flexible encoding strategies, comprehensive quality metrics, and detailed analysis tools.
 
 ---
 
