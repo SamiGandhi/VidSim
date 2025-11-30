@@ -1,0 +1,3 @@
+from metrics.brisque.brisque import BRISQUE
+
+__version__ = "0.0.15"
