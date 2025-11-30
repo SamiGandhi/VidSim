@@ -101,7 +101,7 @@ VidSim is an advanced research framework for region-of-interest (ROI) video codi
 The easiest way to get started is using the graphical interface:
 
 ```bash
-python -m ui.UI
+python -m start.py
 ```
 
 This launches the Tkinter GUI where you can:
