@@ -63,7 +63,7 @@ VidSim is an advanced research framework for region-of-interest (ROI) video codi
 
 1. **Clone or download the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/SamiGandhi/VidSim
    cd vidsim_
    ```
 
@@ -109,16 +109,6 @@ This launches the Tkinter GUI where you can:
 - Configure encoding parameters
 - Run encoding/decoding pipelines
 - Visualize results and metrics
-
-### Running from Command Line
-
-For batch processing or automated experiments:
-
-```bash
-python start.py
-```
-
-This executes the main coding pipeline based on parameters configured in `core/parameters.py`.
 
 ### Example Workflow
 
@@ -238,10 +228,14 @@ vidsim_/
 │
 ├── metrics/                 # Quality metrics and plotting
 │   ├── quality_metrics.py   # PSNR, SSIM, BRISQUE calculations
-│   ├── ploting.py          # Main plotting functions
-│   ├── plot_energy.py      # Energy comparison plots
-│   ├── ploat_data_loss.py  # Network loss plots
-│   └── plots_.py           # Comparison plots
+│   ├── ploting.py           # Main plotting functions
+│   ├── plot_energy.py       # Energy comparison plots
+│   ├── ploat_data_loss.py   # Network loss plots
+│   ├── plots_.py            # Comparison plots
+|   └── brisque/             # BRISQUE quality metric (third-party)
+│         ├── brisque.py          # BRISQUE implementation
+│         ├── models/             # Pre-trained models
+│         └── utilities.py        # Helper functions
 │
 ├── models/                  # Analytical models
 │   └── perti_net.py        # Petri net system model
@@ -249,17 +243,12 @@ vidsim_/
 ├── ui/                      # User interface
 │   ├── UI.py               # Main GUI application
 │   └── UI2.py              # Alternative UI implementation
-│
-├── brisque/                 # BRISQUE quality metric (third-party)
-│   ├── brisque.py          # BRISQUE implementation
-│   ├── models/              # Pre-trained models
-│   └── utilities.py        # Helper functions
-│
 ├── res/                     # Resource files
 │   ├── icon.png            # Application icon
 │   └── *.png               # UI icons
 │
 ├── start.py                 # Project entry point
+├── _version.py              # Project version name
 ├── requirements.txt         # Python dependencies
 └── README.md               # This file
 ```
@@ -419,7 +408,6 @@ All dependencies are listed in `requirements.txt`. Key packages include:
 - **scipy**: Scientific computing
 
 ### Quality Metrics
-- **brisque**: No-reference quality metric (local package)
 - **libsvm**: Support Vector Machine library
 
 ### GUI
@@ -489,7 +477,7 @@ Contributions are welcome! Please follow these guidelines:
 
 ## License
 
-[Specify your license here - MIT, Apache, GPL, etc.]
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -519,7 +507,8 @@ Contributions are welcome! Please follow these guidelines:
 
 ---
 
-**Last Updated**: [Current Date]
+**Last Updated**: 30-11-2025
 
-**Maintained by**: [Your Name/Organization]
+**Maintained by**: HADJI Oussama - University of Batna 2, Departement of Computer Science, Constantine Route. Fésdis, 05078 (Batna, Algeria)
+                   MAIMOUR Moufida - Université de Lorraine, CNRS, CRAN, F-54000 (Nancy, France)
 
