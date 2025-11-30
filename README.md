@@ -484,7 +484,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contact & Support
 
 - **Issues**: Report bugs or request features via GitHub Issues
-- **Email**: [Your contact email]
+- **Email**: (ou.hadji@univ-batna2.dz) or (moufida.maimour@univ-lorraine.fr) 
 - **Documentation**: See inline code comments and docstrings
 
 ---
