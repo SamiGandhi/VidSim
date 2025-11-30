@@ -3,6 +3,7 @@
 
 # But keep these files/folders (whitelist)
 !.gitignore
+!.LICENSE
 !README.md
 !requirements.txt
 !start.py
