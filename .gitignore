@@ -14,6 +14,7 @@
 !res/
 !ui/
 !models/
+!TESTING_VIDEOS/
 
 # Inside these folders, track all files (unignore recursively)
 !core/**
@@ -21,6 +22,8 @@
 !res/**
 !ui/**
 !models/**
+!TESTING_VIDEOS/**
+
 
 # Ignore Python bytecode / cache / venv if any slipped in
 __pycache__/

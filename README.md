@@ -411,48 +411,52 @@ This project is released under the **MIT License**. See [LICENSE](LICENSE) for t
 **Last Updated:** 30-11-2025  
 **Maintained by:** HADJI Oussama & MAIMOUR Moufida
 
-If you publish results based on VidSim, please cite the maintainers or reference the GitHub repository so others can replicate your experiments.
--
-### Notes about FPS and numeric CLI args
-- The CLI `--fps` historically expected an integer; fractional frame rates (e.g. 29.97) can appear from some video files.
-- The UI writes the integer part of the captured FPS to avoid int("29.97") errors.
-- Recommended: pass floats on the CLI and accept floats in the code. Example usage:
+
+
+
+---
+
+## Test Video
+
+The `TESTING_VIDEOS/` folder contains sample video file for quick testing and validation of the VidSim pipeline.
+
+### Available Test Video
+Selected From "A Large-scale Benchmark Dataset for Event Recognition in Surveillance Video" By 
+
+| File | Resolution | FPS | Use Case |
+|------|------------|-----|----------|
+| `VIRAT_S_010204_05_000856_000890.mp4` | 144×144 | 30 | Quick smoke tests; fastest encoding. |
+
+
+### Quick Start with Test Videos
+
+Encode a test video and generate plots:
 
 ```bash
-python vidsim.py core --video-path "C:\Videos\sample.mp4" --fps 29.97
+python vidsim.py core \
+    --video-path "TESTING_VIDEOS\VIRAT_S_010204_05_000856_000890.mp4" \
+    --output-dir "TESTING_VIDEOS\vir" \
+    --method ROI \
+    --quality-factor 75 \
+    --decode \
+    --plots
 ```
 
-If you prefer integers, use the integer part (e.g. `--fps 29`) or change the parser in `start.py` to accept floats (`type=float`) and ensure `Parameters.fps` can hold a float.
-
-## Packaging (Windows executable)
-
-You can create a Windows executable using PyInstaller. Use `--onedir` while debugging and switch to `--onefile` for distribution. Example commands:
+Decode-only (reusing previous captures):
 
 ```bash
-# debug-friendly folder
-pyinstaller --name vidsim --onedir start.py
-
-# single-file executable (may be larger and extract at runtime)
-pyinstaller --name vidsim --onefile start.py
-
-# include package data (Windows uses semicolon separator)
-pyinstaller --onefile vidsim.py --add-data "ui;ui" --add-data "core;core" --add-data "metrics;metrics" --add-data "res;res" --icon=res/icon.png
+python vidsim.py core \
+    --output-dir "TESTING_VIDEOS\vir" \
+    --decode-only
 ```
 
-Common portability notes:
-- Build for the target architecture (x64 vs x86).
-- Ship or instruct users to install the correct Microsoft Visual C++ Redistributable.
-- Use `--onedir` if PyInstaller misses large native DLLs (OpenCV); it's easier to debug.
-- Antivirus/SmartScreen may block unsigned single-file EXEs — consider code signing or an installer.
+Generate plots for an existing experiment:
 
-Runtime helper to locate bundled resources (use when opening data files in code):
-
-```python
-def resource_path(rel_path):
-    import sys, os
-    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base, rel_path)
+```bash
+python vidsim.py core \
+    --output-dir "vir\144X144\QF_75" \
+    --plots-only
 ```
 
-For complex packaging, generate and edit a `.spec` file to include datas and hidden imports. Test the packaged app on a clean Windows VM before distributing.
+---
 
