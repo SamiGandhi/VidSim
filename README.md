@@ -98,7 +98,7 @@ VidSim is an advanced research framework for region-of-interest (ROI) video codi
 
 ### Running the GUI
 
-Launch the graphical interface (default behavior):
+Launch the graphical interface (default):
 
 ```bash
 python start.py
@@ -109,6 +109,14 @@ This opens the Tkinter GUI where you can:
 - Configure encoding parameters
 - Run encoding/decoding pipelines
 - Visualize results and metrics
+
+Note: a small wrapper entrypoint was added so you can also run the project using the canonical entrypoint `vidsim.py`:
+
+```bash
+python vidsim.py      # same behavior as start.py
+python vidsim.py --help
+python vidsim.py core --help   # show all core CLI options (detailed)
+```
 
 ### Running from the Console (CLI Mode)
 
@@ -136,6 +144,7 @@ python start.py core \
 | `--roi-threshold`, `--threshold`, `--max-level-s` | ROI / S-frame controls |
 | `--distance`, `--frequency`, `--environment`, `--humidity`, `--vegetation` | Channel model overrides |
 | `--decode` | Run decoding immediately after encoding |
+| `--decode-only` | Skip encoding and decode an existing run (requires `--output-dir` or `--video-path`) |
 
 Run `python start.py core --help` to see the full list.
 
@@ -547,4 +556,47 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Maintained by**: 
    - HADJI Oussama - University of Batna 2, Departement of Computer Science, Constantine Route. Fésdis, 05078 (Batna, Algeria) - ou.hadji@univ-batna2.dz
    - MAIMOUR Moufida - Université de Lorraine, CNRS, CRAN, F-54000 (Nancy, France) - moufida.maimour@univ-lorraine.fr
+
+### Notes about FPS and numeric CLI args
+- The CLI `--fps` historically expected an integer; fractional frame rates (e.g. 29.97) can appear from some video files.
+- The UI writes the integer part of the captured FPS to avoid int("29.97") errors.
+- Recommended: pass floats on the CLI and accept floats in the code. Example usage:
+
+```bash
+python vidsim.py core --video-path "C:\Videos\sample.mp4" --fps 29.97
+```
+
+If you prefer integers, use the integer part (e.g. `--fps 29`) or change the parser in `start.py` to accept floats (`type=float`) and ensure `Parameters.fps` can hold a float.
+
+## Packaging (Windows executable)
+
+You can create a Windows executable using PyInstaller. Use `--onedir` while debugging and switch to `--onefile` for distribution. Example commands:
+
+```bash
+# debug-friendly folder
+pyinstaller --name vidsim --onedir start.py
+
+# single-file executable (may be larger and extract at runtime)
+pyinstaller --name vidsim --onefile start.py
+
+# include package data (Windows uses semicolon separator)
+pyinstaller --onefile vidsim.py --add-data "ui;ui" --add-data "core;core" --add-data "metrics;metrics" --add-data "res;res" --icon=res/icon.png
+```
+
+Common portability notes:
+- Build for the target architecture (x64 vs x86).
+- Ship or instruct users to install the correct Microsoft Visual C++ Redistributable.
+- Use `--onedir` if PyInstaller misses large native DLLs (OpenCV); it's easier to debug.
+- Antivirus/SmartScreen may block unsigned single-file EXEs — consider code signing or an installer.
+
+Runtime helper to locate bundled resources (use when opening data files in code):
+
+```python
+def resource_path(rel_path):
+    import sys, os
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, rel_path)
+```
+
+For complex packaging, generate and edit a `.spec` file to include datas and hidden imports. Test the packaged app on a clean Windows VM before distributing.
 

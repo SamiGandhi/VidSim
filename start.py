@@ -22,11 +22,18 @@ def _get_parameter_defaults() -> Dict[str, Any]:
         "default_width": Parameters.default_width,
         "default_height": Parameters.default_height,
         "quality_factor": Parameters.quality_factor,
+        "zone_size": Parameters.zone_size,
+        "DCT": Parameters.DCT,
+        "level_numbers": Parameters.level_numbers,
+        "entropy_coding": Parameters.entropy_coding,
         "high_quality_factor": Parameters.high_quality_factor,
         "low_quality_factor": Parameters.low_quality_factor,
         "gop_coefficient": Parameters.gop_coefficient,
         "roi_threshold": Parameters.roi_threshold,
         "threshold": Parameters.threshold,
+        "w1": Parameters.w1,
+        "w2": Parameters.w2,
+        "w3": Parameters.w3,
         "max_level_S": Parameters.max_level_S,
         "DISTANCE": Parameters.DISTANCE,
         "FREQUENCY": Parameters.FREQUENCY,
@@ -126,6 +133,54 @@ def _build_parser() -> argparse.ArgumentParser:
         help=f"Binary threshold value (default: {defaults['threshold']})",
     )
     core_parser.add_argument(
+        "--zone-size",
+        type=int,
+        dest="zone_size",
+        default=None,
+        help=f"DCT/ROI block size (default: {defaults['zone_size']})",
+    )
+    core_parser.add_argument(
+        "--dct",
+        dest="DCT",
+        default=None,
+        help=f"DCT type, e.g. CLA, sLLM, tBIN (default: {defaults['DCT']})",
+    )
+    core_parser.add_argument(
+        "--levels",
+        type=int,
+        dest="level_numbers",
+        default=None,
+        help=f"Number of scalable layers (default: {defaults['level_numbers']})",
+    )
+    core_parser.add_argument(
+        "--entropy",
+        dest="entropy_coding",
+        default=None,
+        help=f"Entropy coding mode (default: {defaults['entropy_coding']})",
+    )
+    core_parser.add_argument(
+        "--w1",
+        type=int,
+        dest="w1",
+        default=None,
+        help=f"ROI mask window size w1 (default: {defaults['w1']})",
+    )
+    core_parser.add_argument(
+        "--w2",
+        type=int,
+        dest="w2",
+        default=None,
+        help=f"ROI mask window size w2 (default: {defaults['w2']})",
+    )
+    core_parser.add_argument(
+        "--w3",
+        type=int,
+        dest="w3",
+        default=None,
+        help=f"ROI mask window size w3 (default: {defaults['w3']})",
+    )
+        
+    core_parser.add_argument(
         "--max-level-s",
         type=int,
         dest="max_level_S",
@@ -171,6 +226,11 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Run decoding immediately after encoding.",
     )
+    core_parser.add_argument(
+        "--decode-only",
+        action="store_true",
+        help="Skip encoding and only run decoding for an existing output directory.",
+    )
 
     return parser
 
@@ -185,11 +245,18 @@ def _apply_overrides(args: argparse.Namespace) -> None:
         "default_width",
         "default_height",
         "quality_factor",
+        "zone_size",
+        "DCT",
+        "level_numbers",
+        "entropy_coding",
         "high_quality_factor",
         "low_quality_factor",
         "gop_coefficient",
         "roi_threshold",
         "threshold",
+        "w1",
+        "w2",
+        "w3",
         "max_level_S",
         "DISTANCE",
         "FREQUENCY",
@@ -225,9 +292,24 @@ def start_ui(show_version: bool = False) -> None:
 def run_core_cli(args: argparse.Namespace) -> None:
     """Execute the encoding/decoding pipeline via CLI mode."""
     _apply_overrides(args)
-    _verify_core_requirements()
+
+    decode_only = False
+    if args.decode_only:
+        args.decode = True
+        decode_only = True
+    elif args.decode and not Parameters.captured_video_path and Parameters.output_directory:
+        decode_only = True
+    if decode_only and not (Parameters.output_directory or Parameters.captured_video_path):
+        raise ValueError("Decode-only mode requires --output-dir or --video-path to locate artifacts.")
+
+    if not decode_only:
+        _verify_core_requirements()
+
     Parameters.setup_directories()
-    core_main.run_coding()
+
+    if not decode_only:
+        core_main.run_coding()
+
     if args.decode:
         core_main.run_decoding()
 

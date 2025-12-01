@@ -16,6 +16,19 @@ import cv2
 from core.parameters import Parameters as para
 
 
+def _get_frame_count_for_decoding(is_roi: bool) -> int:
+    """Return frame count for decoding, using cached frames if video path is unavailable."""
+    if para.captured_video_path:
+        frame_nb = cap.capture_frames()
+    else:
+        frame_nb = util.count_captured_frames(para.captured_frame_dir)
+        if frame_nb == 0:
+            raise ValueError("No captured frames available. Provide --video-path or rerun encoding.")
+    if is_roi:
+        frame_nb = max(frame_nb - 1, 0)
+    return frame_nb
+
+
 def run_coding():
     """
     Encodes a video sequence based on defined parameters.
@@ -118,12 +131,11 @@ def run_decoding():
     Handles the decoding of captured or encoded video frames.
     Delegates to ROI or non-ROI decoder pipelines depending on parameters.
     """
+    util.make_dir(para.decoded_frames_dir)
     if para.method == 'ROI':
-        util.make_dir(para.decoded_frames_dir)
-        frame_nb = cap.capture_frames() - 1
+        frame_nb = _get_frame_count_for_decoding(is_roi=True)
         decoder.build_received_video_roi(frame_nb)
     else:
-        util.make_dir(para.decoded_frames_dir)
-        frame_nb = cap.capture_frames()
+        frame_nb = _get_frame_count_for_decoding(is_roi=False)
         decoder.build_received_video(frame_nb)
 

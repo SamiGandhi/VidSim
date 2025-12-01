@@ -245,6 +245,16 @@ def get_row_col(block_nb, frame_width):
     return row, col
 
 
+def count_captured_frames(frame_dir):
+    """Return the number of captured frame files present in a directory."""
+    if not os.path.isdir(frame_dir):
+        return 0
+    try:
+        return len([name for name in os.listdir(frame_dir) if name.startswith("frame") and name.endswith(".png")])
+    except OSError:
+        return 0
+
+
 def parse_rcv_file(line):
     """Parse a trace file line for normal packet/frame (non-ROI) information."""
     packet_blocks = []

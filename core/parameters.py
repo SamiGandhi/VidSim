@@ -63,27 +63,27 @@ class Parameters:
     @classmethod
     def setup_directories(cls):
         """Sets up working directory structure depending on method and parameter values."""
-        if(cls.method == 'ROI'):
+        if cls.method == 'ROI':
             directory = f"{cls.default_height}X{cls.default_width}/HQF_{cls.high_quality_factor}_LQF_{cls.low_quality_factor}/GOP_{cls.gop_coefficient}"
         else:
             directory = f"{cls.default_height}X{cls.default_width}/QF_{cls.quality_factor}/GOP_{cls.gop_coefficient}"
+
+        base_directory = cls.output_directory.strip()
         cls.video_base_path, _ = os.path.splitext(cls.captured_video_path)
-        if cls.video_base_path == '':
-            raise ValueError("Must Select a Video File to start")
-        if cls.output_directory == '':
-            cls.captured_frame_dir = os.path.join(cls.video_base_path, directory, 'captured_frames')
-            cls.reference_frames_dir = os.path.join(cls.video_base_path, directory, 'reference_frames')
-            cls.decoded_frames_dir = os.path.join(cls.video_base_path, directory, 'decoded')
-            cls.trace_file_path = os.path.join(cls.video_base_path, directory, 'trace')
-            cls.roi_frame_dir = os.path.join(cls.video_base_path, directory, 'roi_frames')
-            cls.masks_dir = os.path.join(cls.video_base_path, directory, 'roi_masks')
+
+        if not base_directory:
+            if cls.video_base_path == '':
+                raise ValueError("Must provide a video file path or set output_directory to decode existing data.")
+            base_directory = cls.video_base_path
         else:
-            cls.captured_frame_dir = os.path.join(cls.output_directory, directory, 'captured_frames')
-            cls.reference_frames_dir = os.path.join(cls.output_directory, directory, 'reference_frames')
-            cls.decoded_frames_dir = os.path.join(cls.output_directory, directory, 'decoded')
-            cls.trace_file_path = os.path.join(cls.output_directory, directory, 'trace')
-            cls.roi_frame_dir = os.path.join(cls.output_directory, directory, 'roi_frames')
-            cls.masks_dir = os.path.join(cls.output_directory, directory, 'roi_masks')
+            cls.video_base_path = base_directory
+
+        cls.captured_frame_dir = os.path.join(base_directory, directory, 'captured_frames')
+        cls.reference_frames_dir = os.path.join(base_directory, directory, 'reference_frames')
+        cls.decoded_frames_dir = os.path.join(base_directory, directory, 'decoded')
+        cls.trace_file_path = os.path.join(base_directory, directory, 'trace')
+        cls.roi_frame_dir = os.path.join(base_directory, directory, 'roi_frames')
+        cls.masks_dir = os.path.join(base_directory, directory, 'roi_masks')
 
     @classmethod
     def print_params(cls):
