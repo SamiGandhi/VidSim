@@ -98,28 +98,57 @@ VidSim is an advanced research framework for region-of-interest (ROI) video codi
 
 ### Running the GUI
 
-The easiest way to get started is using the graphical interface:
+Launch the graphical interface (default behavior):
 
 ```bash
-python -m start.py
+python start.py
 ```
 
-This launches the Tkinter GUI where you can:
+This opens the Tkinter GUI where you can:
 - Select video files
 - Configure encoding parameters
 - Run encoding/decoding pipelines
 - Visualize results and metrics
 
+### Running from the Console (CLI Mode)
+
+You can run the core pipeline directly from the terminal and override any parameter. Only the values you supply are changed; everything else uses the defaults in `core/parameters.py`.
+
+```bash
+python start.py core \
+    --video-path path/to/video.mp4 \
+    --method ROI \
+    --quality-factor 75 \
+    --roi-threshold 12 \
+    --decode
+```
+
+**Useful CLI options**
+
+| Option | Description |
+| --- | --- |
+| `--video-path` | Path to the input video file (required if not set in `Parameters`) |
+| `--output-dir` | Override the output base directory |
+| `--method` | `ROI` or `Non-ROI` |
+| `--fps`, `--width`, `--height` | Frame rate and resolution |
+| `--quality-factor`, `--hqf`, `--lqf` | Quality settings |
+| `--gop` | GOP coefficient / scene change threshold |
+| `--roi-threshold`, `--threshold`, `--max-level-s` | ROI / S-frame controls |
+| `--distance`, `--frequency`, `--environment`, `--humidity`, `--vegetation` | Channel model overrides |
+| `--decode` | Run decoding immediately after encoding |
+
+Run `python start.py core --help` to see the full list.
+
 ### Example Workflow
 
-1. **Configure Parameters**: Edit `core/parameters.py` or use the GUI to set:
+1. **Configure Parameters**: Edit `core/parameters.py`, use the GUI, or pass CLI flags to set:
    - Video input path
    - Encoding method (ROI or standard)
    - Quality factors
    - Frame dimensions
    - GOP settings
 
-2. **Run Encoding**: Execute the pipeline to process your video
+2. **Run Encoding**: Execute via GUI or CLI.
 
 3. **Analyze Results**: Use plotting scripts in `metrics/` to visualize:
    - Quality metrics over time
@@ -397,7 +426,13 @@ plt.show()
 
 ## Requirements
 
-All dependencies are listed in `requirements.txt`. Key packages include:
+All dependencies are listed in `requirements.txt`. Install via:
+
+```bash
+pip install -r requirements.txt
+```
+
+Key packages include:
 
 ### Core Dependencies
 - **numpy**: Numerical computations
