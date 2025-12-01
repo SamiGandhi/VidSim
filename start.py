@@ -3,13 +3,15 @@
 # Provides both the Tkinter GUI launcher and a CLI interface to run the core pipeline with overrides.
 
 import argparse
-from typing import Any, Dict, Optional
+import os
+from typing import Any, Dict
 from tkinter import messagebox
 
 from ui import UI as ui
 from _version import __version__
 from core import main as core_main
 from core.parameters import Parameters
+from metrics.plot_runner import generate_all_plots
 
 
 def _get_parameter_defaults() -> Dict[str, Any]:
@@ -231,6 +233,21 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Skip encoding and only run decoding for an existing output directory.",
     )
+    core_parser.add_argument(
+        "--plots",
+        action="store_true",
+        help="Generate plots based on trace data after processing.",
+    )
+    core_parser.add_argument(
+        "--plots-only",
+        action="store_true",
+        help="Skip encoding/decoding and only generate plots from an existing trace directory.",
+    )
+    core_parser.add_argument(
+        "--plots-dir",
+        default=None,
+        help="Directory where generated plots will be saved (default: <trace>/plots).",
+    )
 
     return parser
 
@@ -294,24 +311,39 @@ def run_core_cli(args: argparse.Namespace) -> None:
     _apply_overrides(args)
 
     decode_only = False
+    plots_only = False
+    if args.plots_only:
+        args.plots = True
+        plots_only = True
+        args.decode = False
+        args.decode_only = False
+
     if args.decode_only:
         args.decode = True
         decode_only = True
     elif args.decode and not Parameters.captured_video_path and Parameters.output_directory:
         decode_only = True
+
     if decode_only and not (Parameters.output_directory or Parameters.captured_video_path):
         raise ValueError("Decode-only mode requires --output-dir or --video-path to locate artifacts.")
+    if plots_only and not (Parameters.output_directory or Parameters.captured_video_path):
+        raise ValueError("Plots-only mode requires --output-dir or --video-path to locate artifacts.")
 
-    if not decode_only:
+    should_encode = not decode_only and not plots_only
+    if should_encode:
         _verify_core_requirements()
 
     Parameters.setup_directories()
 
-    if not decode_only:
+    if should_encode:
         core_main.run_coding()
 
-    if args.decode:
+    if args.decode and not plots_only:
         core_main.run_decoding()
+
+    if args.plots:
+        plots_dir = args.plots_dir or os.path.join(Parameters.trace_file_path, "plots")
+        generate_all_plots(Parameters.trace_file_path, plots_dir)
 
 
 def main() -> None:

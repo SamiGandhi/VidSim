@@ -1,562 +1,418 @@
-# VidSim - Video Coding & Quality Analysis Framework
+# VidSim – Comprehensive Video Coding & Quality Analysis Suite
 
-VidSim is an advanced research framework for region-of-interest (ROI) video coding, quality assessment, and visualization. The system provides both a GUI interface for video simulation experiments, supporting flexible encoding strategies, comprehensive quality metrics, and detailed analysis tools.
+VidSim is an end-to-end toolkit for testing and evaluating video coding strategies with a special focus on Region-of-Interest (ROI) workflows. The project bundles:
+
+- A configurable encoding/decoding pipeline (standard & ROI-aware).
+- Detailed quality and energy metrics.
+- Automated plotting and reporting.
+- A Tkinter-based user interface.
+- Command-line automation for headless runs.
+
+VidSim is built for researchers and engineers who need to iterate quickly on compression experiments, visualize results, and share repeatable scenarios.
 
 ---
 
 ## Table of Contents
 
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Usage](#usage)
-- [Project Structure](#project-structure)
-- [Configuration](#configuration)
-- [Quality Metrics](#quality-metrics)
-- [Examples](#examples)
-- [Requirements](#requirements)
-- [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
+1. [Key Highlights](#key-highlights)
+2. [Architecture Overview](#architecture-overview)
+3. [Directory Layout](#directory-layout)
+4. [Installation & Environment](#installation--environment)
+5. [Entry Points](#entry-points)
+6. [Graphical Interface](#graphical-interface)
+7. [Command-Line Interface](#command-line-interface)
+8. [Configuration & Parameters](#configuration--parameters)
+9. [Data Flow & Outputs](#data-flow--outputs)
+10. [Quality Metrics & Plotting](#quality-metrics--plotting)
+11. [Petri Net & Analytical Tools](#petri-net--analytical-tools)
+12. [Advanced Topics](#advanced-topics)
+13. [Troubleshooting & FAQ](#troubleshooting--faq)
+14. [Contributing](#contributing)
+15. [Contacts](#contacts)
+16. [License](#license)
 
 ---
 
-## Features
+## Key Highlights
 
-### Core Capabilities
+### Core Video Pipeline
+- **ROI & Non-ROI Encoding**: Encode full frames or restrict bitrate to ROI masks.
+- **Adaptive GOP**: Detect scene changes via MSE thresholds.
+- **Main vs Secondary Frames**: Encode intra and inter frames separately.
+- **Scalable Layers**: Configure up to multiple layers with entropy coding.
 
-- **Flexible Video Coding Pipeline**: Supports both standard and ROI-based encoding with configurable parameters
-- **Region-of-Interest (ROI) Support**: Intelligent mask generation and block prioritization for adaptive compression
-- **Scalable Layer Encoding**: Multi-layer encoding with configurable quality levels
-- **Multiple DCT Algorithms**: Support for various DCT implementations (CLA, LLM, BIN variants)
-- **Frame Type Management**: Main (M) and Secondary (S) frame encoding with GOP-based scene change detection
+### Quality & Analysis
+- **Metrics**: PSNR, SSIM, BRISQUE (no-reference), bitrates, packet stats.
+- **Plots**: Energy curves, rate-distortion, BER/SNR over time, ROI vs non-ROI comparisons.
+- **Trace Files**: Frame-level and packet-level CSV/TSV logs for offline processing.
 
-### Quality Assessment
-
-- **Comprehensive Metrics**: PSNR, SSIM, and BRISQUE quality measurements
-- **Automated Analysis**: Built-in tools for comparing ROI vs. non-ROI encoding strategies
-- **Visualization Tools**: Extensive plotting capabilities for metrics, energy, bitrate, and network loss
-
-### Analysis & Visualization
-
-- **Energy Analysis**: Capture and encoding energy calculations with detailed breakdowns
-- **Network Simulation**: Signal loss, SNR, and BER modeling for transmission analysis
-- **Petri Net Modeling**: System workflow visualization and analysis
-- **Trace File Generation**: Detailed logging of frames, packets, and metrics
-
-### User Interface
-
-- **Graphical User Interface**: Intuitive Tkinter-based GUI for easy experimentation
-- **Batch Processing**: Command-line interface for automated runs
-- **Real-time Monitoring**: Progress tracking and result visualization
+### Tooling
+- **Tkinter GUI**: Parameter setup, run control, visualization.
+- **CLI Automation**: Headless runs, decode-only, plots-only, directory-based workflows.
+- **Plot Runner**: One command to build all graph outputs for an experiment.
+- **Packaging**: PyInstaller-ready structure for Windows distribution.
 
 ---
 
-## Installation
+## Architecture Overview
 
-### Prerequisites
+```
+┌──────────────────┐
+│  GUI / CLI       │  (start.py / vidsim.py)
+└────────┬─────────┘
+         │ Parameters (core/parameters.py)
+         ▼
+┌──────────────────┐
+│  Core Pipeline   │  (capture → ROI/main encoders → entropy → trace)
+└────────┬─────────┘
+         │ Trace files (st-frame / st-packet / rt-frame)
+         ▼
+┌──────────────────┐
+│ Decoder & Stats  │  (core/decoder.py, metrics/quality_metrics.py)
+└────────┬─────────┘
+         │
+         ▼
+┌──────────────────┐
+│ Plot Runner      │  (metrics/plot_runner.py → PNG dashboards)
+└──────────────────┘
+```
 
-- Python 3.9 or higher
-- pip (Python package manager)
+- **Input**: Any video supported by OpenCV (e.g., MP4, AVI, Y4M).
+- **Processing**: ROI detection, DCT transform, quantization, scalable layer packaging.
+- **Output**: Captured frames, reference frames, decoded frames, trace logs, metric plots.
 
-### Step-by-Step Installation
+---
 
-1. **Clone or download the repository**
+## Directory Layout
+
+```
+vidsim_/
+├── core/                  # Capture, encoding, decoding, utilities
+├── metrics/               # Quality metrics & plotting helpers
+├── models/                # Petri net / analytical models
+├── ui/                    # Tkinter front-end
+├── res/                   # Icons & static assets
+├── start.py               # Main entry point (GUI + CLI)
+├── vidsim.py              # Thin wrapper around start.py (canonical name)
+├── metrics/plot_runner.py # Automated plot orchestrator
+├── README.md              # This file
+└── requirements.txt       # Python dependencies
+```
+
+Experiment outputs follow the pattern:
+
+```
+<base>/<height>x<width>/<PROFILE>/GOP_<value>/
+├── captured_frames/
+├── reference_frames/
+├── decoded/
+├── roi_frames/ (ROI mode)
+├── roi_masks/  (ROI mode)
+└── trace/
+    ├── st-frame     (encoding stats)
+    ├── st-packet    (packet logs)
+    └── rt-frame     (decoding metrics)
+```
+
+If you pass `--output-dir`, `<base>` becomes that directory; otherwise it is derived from the source video path.
+
+---
+
+## Installation & Environment
+
+1. Clone and enter the project:
    ```bash
    git clone https://github.com/SamiGandhi/VidSim
    cd vidsim_
    ```
 
-2. **Create a virtual environment (recommended)**
+2. Create & activate a virtual environment (recommended):
    ```bash
    python -m venv venv
+   # Windows
+   .\venv\Scripts\activate
+   # Linux/Mac
+   source venv/bin/activate
    ```
 
-3. **Activate the virtual environment**
-   - **Windows:**
-     ```bash
-     .\venv\Scripts\activate
-     ```
-   - **Linux/Mac:**
-     ```bash
-     source venv/bin/activate
-     ```
-
-4. **Install dependencies**
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-5. **Verify installation**
+4. Smoke test:
    ```bash
-   python start.py --help
+   python vidsim.py --help
+   python vidsim.py core --help
    ```
+
+> **Note**: Tkinter ships with CPython, but on Linux you might need `sudo apt install python3-tk`. BRISQUE relies on libsvm; the bundled `metrics/brisque/` folder must remain in place.
 
 ---
 
-## Quick Start
+## Entry Points
 
-### Running the GUI
+| Command                      | Description                                                       |
+|------------------------------|-------------------------------------------------------------------|
+| `python vidsim.py`           | Launch GUI (default).                                             |
+| `python start.py`            | Same as above (alternate name).                                  |
+| `python vidsim.py ui`        | Explicit GUI mode + `--version` flag to print only the version.  |
+| `python vidsim.py core ...`  | CLI automation (see below).                                      |
 
-Launch the graphical interface (default):
+`vidsim.py` simply imports `start.main()` to align with packaging conventions. If you bundle with PyInstaller, target `vidsim.py`.
 
+---
+
+## Graphical Interface
+
+Run:
 ```bash
-python start.py
+python vidsim.py
 ```
 
-This opens the Tkinter GUI where you can:
-- Select video files
-- Configure encoding parameters
-- Run encoding/decoding pipelines
-- Visualize results and metrics
+Features:
+- File pickers for video selection & output directories.
+- Parameter panels (encoding, ROI, network, energy).
+- Buttons for *Capture*, *Encode*, *Decode*, *Compute Metrics*, *Generate Plots*.
+- Embedded Matplotlib widgets (via `FigureCanvasTkAgg`) for inline visualization.
+- Status console using `ScrolledText` for logs.
 
-Note: a small wrapper entrypoint was added so you can also run the project using the canonical entrypoint `vidsim.py`:
+The GUI writes chosen parameters back to `core/parameters.py` at runtime, so CLI runs can reuse them.
 
-```bash
-python vidsim.py      # same behavior as start.py
-python vidsim.py --help
-python vidsim.py core --help   # show all core CLI options (detailed)
-```
+---
 
-### Running from the Console (CLI Mode)
+## Command-Line Interface
 
-You can run the core pipeline directly from the terminal and override any parameter. Only the values you supply are changed; everything else uses the defaults in `core/parameters.py`.
+### Core Workflow
 
 ```bash
-python start.py core \
-    --video-path path/to/video.mp4 \
+python vidsim.py core \
+    --video-path input.mp4 \
     --method ROI \
     --quality-factor 75 \
     --roi-threshold 12 \
-    --decode
+    --decode \
+    --plots
 ```
 
-**Useful CLI options**
+Steps performed:
+1. Apply overrides (`--video-path`, `--method`, …) on top of `Parameters`.
+2. Create output directories.
+3. Capture frames, encode, write traces.
+4. Decode (if `--decode`).
+5. Generate plots (if `--plots`).
 
-| Option | Description |
-| --- | --- |
-| `--video-path` | Path to the input video file (required if not set in `Parameters`) |
-| `--output-dir` | Override the output base directory |
-| `--method` | `ROI` or `Non-ROI` |
-| `--fps`, `--width`, `--height` | Frame rate and resolution |
-| `--quality-factor`, `--hqf`, `--lqf` | Quality settings |
-| `--gop` | GOP coefficient / scene change threshold |
-| `--roi-threshold`, `--threshold`, `--max-level-s` | ROI / S-frame controls |
-| `--distance`, `--frequency`, `--environment`, `--humidity`, `--vegetation` | Channel model overrides |
-| `--decode` | Run decoding immediately after encoding |
-| `--decode-only` | Skip encoding and decode an existing run (requires `--output-dir` or `--video-path`) |
+### Decode-Only
 
-Run `python start.py core --help` to see the full list.
+If you already have captured frames / traces:
 
-### Example Workflow
+```bash
+python vidsim.py core \
+    --output-dir vir \
+    --decode-only
+```
 
-1. **Configure Parameters**: Edit `core/parameters.py`, use the GUI, or pass CLI flags to set:
-   - Video input path
-   - Encoding method (ROI or standard)
-   - Quality factors
-   - Frame dimensions
-   - GOP settings
+The CLI automatically counts existing frames if `--video-path` is omitted.
 
-2. **Run Encoding**: Execute via GUI or CLI.
+### Plot-Only
 
-3. **Analyze Results**: Use plotting scripts in `metrics/` to visualize:
-   - Quality metrics over time
-   - Energy consumption
-   - Bitrate analysis
-   - Network loss characteristics
+Generate dashboards for a previous experiment:
+
+```bash
+python vidsim.py core \
+    --output-dir vir \
+    --plots-only \
+    --plots-dir vir/plots
+```
+
+### CLI Options Cheat Sheet
+
+| Flag | Description |
+|------|-------------|
+| `--video-path PATH` | Input video; required for new encodes. |
+| `--output-dir DIR` | Root directory for results (capture, trace, decoded, plots). |
+| `--method {ROI,Non-ROI}` | Encoding strategy. |
+| `--fps`, `--width`, `--height` | Capture rate & resizing. Floats allowed for FPS. |
+| `--quality-factor`, `--hqf`, `--lqf` | JPEG/ROI quality controls. |
+| `--zone-size`, `--dct`, `--levels`, `--entropy` | Transform & scalability settings. |
+| `--gop` | GOP/MSE threshold for main-vs-secondary frame decision. |
+| `--roi-threshold`, `--threshold`, `--w1/2/3`, `--max-level-s` | ROI mask tuning. |
+| `--distance`, `--frequency`, `--environment`, `--humidity`, `--vegetation` | Network model overrides. |
+| `--decode`, `--decode-only` | Run decoder; optionally skip encoding. |
+| `--plots`, `--plots-only`, `--plots-dir` | Plot generation controls. |
+
+Run `python vidsim.py core --help` for the authoritative list (kept in sync with `start.py`).
 
 ---
 
-## Usage
+## Configuration & Parameters
 
-### Core Pipeline
+All defaults live in `core/parameters.py`. Highlights:
 
-The main video processing pipeline is located in `core/`:
+| Group | Key Attributes |
+|-------|----------------|
+| Video | `captured_video_path`, `fps`, `default_width`, `default_height` |
+| Encoding | `method`, `quality_factor`, `high_quality_factor`, `low_quality_factor`, `gop_coefficient`, `zone_size`, `DCT`, `level_numbers`, `entropy_coding` |
+| ROI | `w1`, `w2`, `w3`, `roi_threshold`, `threshold`, `max_level_S` |
+| Paths | `output_directory`, derived directories via `setup_directories()` |
+| Network/Energy | `DISTANCE`, `FREQUENCY`, `ENVIRONMENT`, `HUMIDITY_LEVEL`, `VEGETATION_DENSITY_LEVEL`, `POWER`, `PROC_CLOCK`, `CAPTURE_E_PER_BLOCK` |
 
-- **`main.py`**: Entry point for the coding pipeline
-  - `run_coding()`: Encodes video frames
-  - `run_decoding()`: Decodes and reconstructs video
+### Tips
+- Call `Parameters.setup_directories()` after setting all fields; it derives folder paths.
+- Use `Parameters.print_params()` inside Python or REPL to inspect the effective configuration.
+- `Parameters.reset()` restores shipping defaults.
 
-- **`capture.py`**: Frame extraction from video files
-  - Supports frame rate downsampling
-  - Automatic resizing to target dimensions
+---
 
-- **`main_frame.py`**: Main frame encoding logic
-  - DCT transformation
-  - Quantization
-  - Layer creation and packetization
+## Data Flow & Outputs
 
-- **`second_frame.py`**: Secondary frame encoding
-  - Difference-based encoding
-  - Block prioritization by Mean Square (MS) values
+1. **Capture**: `core/capture.py` reads every `capture_steps` frame, converts to grayscale, resizes.
+2. **ROI Detection**: `core/roi.py` produces SAD/R/G maps, compression classes, masks saved in `roi_masks/`.
+3. **Encoding**:
+   - DCT/quantization via `core/main_frame.py` & `core/dct.py`.
+   - Scalable layers with `core/entropy.py`.
+   - Packetization recorded in `core/trace.py` structures and written by `core/util.py`.
+4. **Decoding**:
+   - Reads `st-packet`, reconstructs frames in `core/decoder.py`.
+   - BER/SNR optional noise injection.
+5. **Metrics**:
+   - `metrics/quality_metrics.py` computes PSNR/SSIM/BRISQUE (ROI vs original).
+6. **Plots**:
+   - `metrics/plot_runner.generate_all_plots()` loads trace TSVs and saves PNGs.
 
-- **`roi.py`**: Region-of-Interest processing
-  - SAD, R, and G mask generation
-  - Compression class assignment (C1, C2, C3)
+---
 
-- **`decoder.py`**: Decoding and reconstruction
-  - Frame reconstruction from packets
-  - Error concealment
-  - BER noise simulation
+## Quality Metrics & Plotting
 
-### Quality Metrics
+### Metrics
 
-Located in `metrics/quality_metrics.py`:
+- **PSNR**: `calculate_psnr(ref, decoded)` – uses `skimage.metrics.peak_signal_noise_ratio`.
+- **SSIM**: `calculate_ssim(ref, decoded)` – window size 8 by default.
+- **BRISQUE**: `calculate_brisque(rgb_image)` – no-reference; requires BRISQUE folder.
 
-```python
-from metrics import quality_metrics
+### Plot Runner Outputs
 
-# Calculate PSNR
-psnr = quality_metrics.calculate_psnr(reference_image, decoded_image)
+When `--plots` or `--plots-only` is provided, the following PNGs are produced (default: `<trace>/plots/`):
 
-# Calculate SSIM
-ssim = quality_metrics.calculate_ssim(reference_image, decoded_image)
+| File | Description |
+|------|-------------|
+| `psnr.png`, `ssim.png`, `brisque.png` | Metric vs frame index. |
+| `psnr_bpp.png`, `ssim_bpp.png`, `brisque_bpp.png` | Rate-distortion views. |
+| `bitrate.png`, `bpp.png`, `frame_size.png` | Size/bandwidth tracking. |
+| `encoding_energy.png`, `total_energy.png` | Energy breakdowns. |
+| `packet_size_over_time.png`, `ber.png`, `snr.png`, `signal_loss.png` | Network/packet diagnostics. |
+| `ref_psnr.png`, `ref_ssim.png` | Reference vs decoded comparisons. |
 
-# Calculate BRISQUE (requires 3-channel RGB image)
-brisque_score = quality_metrics.calculate_brisque(rgb_image)
-```
+`plot_runner` automatically renames columns (e.g., `#Rank → Rank`, `refBrisque → refBRISQUE`) to handle trace inconsistencies.
 
-### Plotting Tools
+---
 
-The `metrics/` directory contains several plotting utilities:
+## Petri Net & Analytical Tools
 
-- **`ploting.py`**: Comprehensive plotting functions for:
-  - PSNR/SSIM/BRISQUE over frame sequence
-  - Rate-distortion curves (bpp vs. quality)
-  - Bitrate analysis
-  - Energy consumption
-
-- **`plot_energy.py`**: Energy comparison between ROI and non-ROI methods
-
-- **`ploat_data_loss.py`**: Network loss visualization (signal loss, SNR, BER)
-
-- **`plots_.py`**: Side-by-side comparison plots for different encoding strategies
-
-### Petri Net Modeling
-
-Visualize system workflow using the Petri net model:
+Run the Petri net visualizer to understand the end-to-end workflow:
 
 ```bash
 python -m models.perti_net
 ```
 
-This generates a graph showing the video processing pipeline stages.
+It uses `networkx` + Matplotlib to draw the discrete-event model (places, transitions, tokens). Useful for presentations and debugging the states (capture → encode → packetize → send → decode → reconstruct).
 
 ---
 
-## Project Structure
+## Advanced Topics
 
-```
-vidsim_/
-├── core/                    # Core video processing pipeline
-│   ├── main.py             # Main pipeline entry point
-│   ├── capture.py          # Frame capture from video
-│   ├── decoder.py          # Decoding and reconstruction
-│   ├── main_frame.py       # Main frame encoding
-│   ├── second_frame.py     # Secondary frame encoding
-│   ├── second_frame_.py    # Alternative S-frame implementation
-│   ├── roi.py              # Region-of-Interest processing
-│   ├── util.py             # Utility functions
-│   ├── parameters.py       # Configuration parameters
-│   ├── trace.py            # Data structures for logging
-│   ├── dct.py              # DCT transformation
-│   ├── entropy.py          # Entropy coding
-│   ├── network_losses_model.py  # Network loss modeling
-│   └── db_losses.py        # Database loss utilities
-│
-├── metrics/                 # Quality metrics and plotting
-│   ├── quality_metrics.py   # PSNR, SSIM, BRISQUE calculations
-│   ├── ploting.py           # Main plotting functions
-│   ├── plot_energy.py       # Energy comparison plots
-│   ├── ploat_data_loss.py   # Network loss plots
-│   ├── plots_.py            # Comparison plots
-|   └── brisque/             # BRISQUE quality metric (third-party)
-│         ├── brisque.py          # BRISQUE implementation
-│         ├── models/             # Pre-trained models
-│         └── utilities.py        # Helper functions
-│
-├── models/                  # Analytical models
-│   └── perti_net.py        # Petri net system model
-│
-├── ui/                      # User interface
-│   ├── UI.py               # Main GUI application
-│   └── UI2.py              # Alternative UI implementation
-├── res/                     # Resource files
-│   ├── icon.png            # Application icon
-│   └── *.png               # UI icons
-│
-├── start.py                 # Project entry point
-├── _version.py              # Project version name
-├── requirements.txt         # Python dependencies
-└── README.md               # This file
-```
+### Fractional FPS
+- The CLI accepts floats (`--fps 29.97`).
+- Internally we store `Parameters.fps` as-is; ensure any arithmetic handles floats.
+- GUI currently writes integers; adjust UI code if you need fractional capture rates from the UI.
 
----
+### Packaging (PyInstaller)
 
-## Configuration
-
-### Parameters File
-
-All configuration is centralized in `core/parameters.py`. Key parameters include:
-
-#### Video Settings
-- `captured_video_path`: Input video file path
-- `fps`: Target frames per second
-- `default_width`, `default_height`: Frame dimensions
-
-#### Encoding Settings
-- `method`: Encoding method (`'ROI'` or standard)
-- `quality_factor`: JPEG quality (1-100)
-- `high_quality_factor`: ROI high-priority quality
-- `low_quality_factor`: ROI low-priority quality
-- `gop_coefficient`: Scene change threshold (MSE)
-- `DCT`: DCT algorithm (`"CLA"`, `"sLLM"`, `"tBIN"`, etc.)
-- `entropy_coding`: Entropy coding method (`"RLE_EG"`)
-
-#### ROI Settings
-- `w1`, `w2`, `w3`: Mask window sizes
-- `roi_threshold`: Block mean threshold for region detection
-- `threshold`: Binary thresholding value
-
-#### Network Simulation
-- `DISTANCE`: Transmission distance (meters)
-- `FREQUENCY`: Carrier frequency (Hz)
-- `ENVIRONMENT`: Environment type (`"wetland"`, etc.)
-- `HUMIDITY_LEVEL`: Humidity percentage
-- `VEGETATION_DENSITY_LEVEL`: Vegetation density
-
-#### Energy Estimation
-- `POWER`: Device power consumption
-- `PROC_CLOCK`: Processor clock rate
-- `CAPTURE_E_PER_BLOCK`: Energy per captured block
-
-### Setting Up Parameters
-
-**Option 1: Edit `core/parameters.py` directly**
-```python
-from core.parameters import Parameters
-
-Parameters.captured_video_path = "path/to/video.mp4"
-Parameters.method = "ROI"
-Parameters.quality_factor = 80
-Parameters.setup_directories()
-```
-
-**Option 2: Use the GUI**
-The GUI provides a user-friendly interface to set all parameters without editing code.
-
----
-
-## Quality Metrics
-
-### PSNR (Peak Signal-to-Noise Ratio)
-
-Measures pixel-level differences between reference and decoded images:
-- Higher values indicate better quality
-- Typical range: 20-50 dB
-- Formula: `PSNR = 10 * log10(MAX² / MSE)`
-
-### SSIM (Structural Similarity Index)
-
-Perceptual quality metric considering luminance, contrast, and structure:
-- Range: 0 to 1 (1 = perfect match)
-- More aligned with human perception than PSNR
-
-### BRISQUE (Blind/Referenceless Image Spatial Quality Evaluator)
-
-No-reference quality metric:
-- Lower scores indicate better quality
-- Works on RGB images (3 channels)
-- Uses pre-trained SVM models
-
----
-
-## Examples
-
-### Example 1: Basic Encoding
-
-```python
-from core.parameters import Parameters
-from core import main
-
-# Configure parameters
-Parameters.captured_video_path = "input_video.mp4"
-Parameters.method = ""  # Standard encoding
-Parameters.quality_factor = 80
-Parameters.fps = 2
-Parameters.setup_directories()
-
-# Run encoding
-main.run_coding()
-main.run_decoding()
-```
-
-### Example 2: ROI Encoding
-
-```python
-from core.parameters import Parameters
-from core import main
-
-# Configure for ROI
-Parameters.captured_video_path = "input_video.mp4"
-Parameters.method = "ROI"
-Parameters.high_quality_factor = 40
-Parameters.low_quality_factor = 20
-Parameters.roi_threshold = 10
-Parameters.setup_directories()
-
-# Run ROI encoding
-main.run_coding()
-main.run_decoding()
-```
-
-### Example 3: Quality Analysis
-
-```python
-import pandas as pd
-from metrics import ploting
-import matplotlib.pyplot as plt
-
-# Load trace data
-st_frame = pd.read_csv("trace/st-frame", delimiter="\t")
-rt_frame = pd.read_csv("trace/rt-frame", delimiter="\t")
-
-# Create plots
-fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-ploting.plot_psnr(axes[0, 0], rt_frame)
-ploting.plot_ssim(axes[0, 1], rt_frame)
-ploting.plot_brisque(axes[1, 0], st_frame, rt_frame)
-ploting.plot_energy(axes[1, 1], st_frame)
-plt.tight_layout()
-plt.show()
-```
-
----
-
-## Requirements
-
-All dependencies are listed in `requirements.txt`. Install via:
+Examples:
 
 ```bash
-pip install -r requirements.txt
+# directory bundle (easier to debug)
+pyinstaller --name vidsim --onedir vidsim.py
+
+# single executable
+pyinstaller --name vidsim --onefile vidsim.py \
+  --add-data "ui;ui" --add-data "core;core" --add-data "metrics;metrics" --add-data "res;res" \
+  --icon=res/icon.png
 ```
 
-Key packages include:
+Guidelines:
+- Build on the target architecture (x86 vs x64).
+- Remember VC++ Redistributable requirements for OpenCV.
+- Use `resource_path()` helpers in code when opening files so PyInstaller’s `_MEIPASS` is respected.
 
-### Core Dependencies
-- **numpy**: Numerical computations
-- **opencv-python**: Image/video processing
-- **matplotlib**: Plotting and visualization
-- **pandas**: Data analysis and CSV handling
-- **scikit-image**: Image processing algorithms
-- **scipy**: Scientific computing
+```python
+def resource_path(rel_path):
+    import os, sys
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, rel_path)
+```
 
-### Quality Metrics
-- **libsvm**: Support Vector Machine library
-
-### GUI
-- **tkinter**: GUI framework (built-in with Python)
-- **Pmw**: Advanced Tkinter widgets
-
-### Analysis
-- **networkx**: Graph/networks analysis (for Petri nets)
-
-### Development
-- **pytest**: Testing framework
-
-See `requirements.txt` for complete list with versions.
+### Persistent Configurations
+- Save parameter presets as JSON/YAML and load them before running `start.main()` if needed.
+- For multiple experiments, script over `python vidsim.py core --output-dir run_<N> ...`.
 
 ---
 
-## Troubleshooting
+## Troubleshooting & FAQ
 
-### Common Issues
+| Issue | Cause / Fix |
+|-------|-------------|
+| `captured_video_path is required` | Provide `--video-path` or ensure `core/parameters.py` has one. For decode-only, add `--output-dir`. |
+| GUI doesn’t launch | Ensure Tkinter is available (`python -m tkinter`). On Linux install the Tk package. |
+| BRISQUE errors | Keep `metrics/brisque/` intact; run from root folder so relative imports work. |
+| No plots generated | Check `trace/` files exist. `plot_runner` logs skipped plots with reasons (missing columns). |
+| FPS parsing errors | Use float-friendly CLI (`--fps 29.97`) or adjust UI to accept decimals. |
+| Permission denied writing outputs | Run from a location where you have write access, or specify `--output-dir`. |
+| Antivirus flags PyInstaller EXE | Use `--onedir` during testing; sign binaries for distribution. |
 
-**1. Import Errors**
-- Ensure all dependencies are installed: `pip install -r requirements.txt`
-- Check that you're in the project root directory
-- Verify Python version (3.9+)
+**FAQ**
 
-**2. Video File Not Found**
-- Check `Parameters.captured_video_path` is set correctly
-- Use absolute paths if relative paths fail
-- Ensure video format is supported (MP4, AVI, etc.)
-
-**3. GUI Not Launching**
-- Verify tkinter is available: `python -m tkinter`
-- On Linux, may need: `sudo apt-get install python3-tk`
-
-**4. BRISQUE Errors**
-- Ensure `brisque/` directory is present with all files
-- Check that `brisque/models/` contains required model files
-
-**5. Memory Issues**
-- Reduce frame dimensions in `parameters.py`
-- Process videos in smaller chunks
-- Close other applications
-
-**6. Permission Errors**
-- Ensure write permissions for output directories
-- Check that output paths are valid
+- *Can I feed color videos?* Yes—frames are converted to grayscale for processing, but you can modify `capture.py` to keep RGB if needed.
+- *Can I limit ROI to multiple regions?* Current implementation uses nested W1/W2/W3 windows; extend `roi.py` to add more classes.
+- *How do I compare ROI vs non-ROI quickly?* Run two experiments with different `--method`, then compare plots or load traces in Jupyter.
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please follow these guidelines:
+1. Fork the repository.
+2. Create a feature branch: `git checkout -b feature/new-idea`.
+3. Follow PEP 8, add docstrings/comments.
+4. Update tests/plots/docs when relevant.
+5. Submit a pull request with a clear description.
 
-1. **Fork the repository**
-2. **Create a feature branch**: `git checkout -b feature-name`
-3. **Make your changes** with clear comments
-4. **Test thoroughly** before submitting
-5. **Submit a pull request** with a clear description
+Please run linting/tests (`pytest`) before submitting. For major changes (e.g., new metrics), file an issue to discuss design choices.
 
-### Code Style
-- Follow PEP 8 Python style guide
-- Add docstrings to all functions and classes
-- Include comments for complex logic
-- Update documentation as needed
+---
+
+## Contacts
+
+- **HADJI Oussama** – University of Batna 2, Department of Computer Science, Constantine Road, Fésdis 05078, Batna, Algeria.  
+  Email: ou.hadji@univ-batna2.dz
+
+- **MAIMOUR Moufida** – Université de Lorraine, CNRS, CRAN, F-54000 Nancy, France.  
+  Email: moufida.maimour@univ-lorraine.fr
+
+For general questions, open an issue on GitHub. For private collaboration or academic inquiries, reach out via the above emails.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is released under the **MIT License**. See [LICENSE](LICENSE) for the exact terms.
 
 ---
 
-## Contact & Support
+**Last Updated:** 30-11-2025  
+**Maintained by:** HADJI Oussama & MAIMOUR Moufida
 
-- **Issues**: Report bugs or request features via GitHub Issues
-- **Email**: (ou.hadji@univ-batna2.dz) or (moufida.maimour@univ-lorraine.fr) 
-- **Documentation**: See inline code comments and docstrings
-
----
-
-## Acknowledgments
-
-- BRISQUE implementation and models (credit original authors)
-- OpenCV community for excellent image processing tools
-- All contributors and users of this framework
-
----
-
-## Version History
-
-- **v1.0.0**: Initial release with core functionality
-  - ROI and standard encoding
-  - Quality metrics (PSNR, SSIM, BRISQUE)
-  - GUI interface
-  - Comprehensive plotting tools
-
----
-
-**Last Updated**: 30-11-2025
-
-**Maintained by**: 
-   - HADJI Oussama - University of Batna 2, Departement of Computer Science, Constantine Route. Fésdis, 05078 (Batna, Algeria) - ou.hadji@univ-batna2.dz
-   - MAIMOUR Moufida - Université de Lorraine, CNRS, CRAN, F-54000 (Nancy, France) - moufida.maimour@univ-lorraine.fr
-
+If you publish results based on VidSim, please cite the maintainers or reference the GitHub repository so others can replicate your experiments.
+-
 ### Notes about FPS and numeric CLI args
 - The CLI `--fps` historically expected an integer; fractional frame rates (e.g. 29.97) can appear from some video files.
 - The UI writes the integer part of the captured FPS to avoid int("29.97") errors.

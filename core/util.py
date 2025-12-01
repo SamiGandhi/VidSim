@@ -37,7 +37,7 @@ def create_trace_files(tracePath):
     """Creates and initializes trace files for frame/packet logging."""
     frameTraceName = os.path.join(tracePath, "st-frame")
     with open(frameTraceName, "w") as traceFile:
-        traceFile.write("#Rank\tType\tSize(Bytes)\trefPSNR\trefSSIM\tBRISQUE\tbpp\tlayers Size (bits)\tcaptureEnergy(mJ)\tencodingEnergy(mJ)\tbit rate (kbps)\n")
+        traceFile.write("#Rank\tType\tSize(Bytes)\trefPSNR\trefSSIM\trefBRISQUE\tbpp\tlayers Size (bits)\tcaptureEnergy(mJ)\tencodingEnergy(mJ)\tbit rate (kbps)\n")
 
     packetTraceName = os.path.join(tracePath, "st-packet")
     with open(packetTraceName, "w") as traceFile:
