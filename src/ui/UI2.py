@@ -39,7 +39,7 @@ def  init_results_view(st_packet,st_frame,rt_frame):
 
     results_view = tk.Tk()
     root.title("Results")
-    icon = tk.PhotoImage(file=r'res\icon.png')
+    icon = tk.PhotoImage(file=r'src\res\icon.png')
     results_view.iconphoto(True, icon)
     results_view.title("Set Parameters")
     tool_tip = Pmw.Balloon(results_view)

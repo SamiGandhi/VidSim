@@ -5,23 +5,12 @@
 !.gitignore
 !.LICENSE
 !README.md
-!requirements.txt
-!start.py
-!vidsim.py
-!_version.py
-!core/
-!metrics/
-!res/
-!ui/
-!models/
+!environment.yml
+!src/
 !TESTING_VIDEOS/
 
 # Inside these folders, track all files (unignore recursively)
-!core/**
-!metrics/**
-!res/**
-!ui/**
-!models/**
+!src/**
 !TESTING_VIDEOS/**
 
 

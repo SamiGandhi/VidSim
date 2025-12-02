@@ -87,16 +87,18 @@ VidSim is built for researchers and engineers who need to iterate quickly on com
 
 ```
 vidsim_/
-├── core/                  # Capture, encoding, decoding, utilities
-├── metrics/               # Quality metrics & plotting helpers
-├── models/                # Petri net / analytical models
-├── ui/                    # Tkinter front-end
-├── res/                   # Icons & static assets
-├── start.py               # Main entry point (GUI + CLI)
-├── vidsim.py              # Thin wrapper around start.py (canonical name)
-├── metrics/plot_runner.py # Automated plot orchestrator
+├── src/                   # Main source code
+│   ├── core/              # Capture, encoding, decoding, utilities
+│   ├── metrics/           # Quality metrics & plotting helpers
+│   ├── models/            # Petri net / analytical models
+│   ├── ui/                # Tkinter front-end
+│   ├── res/               # Icons & static assets
+│   ├── start.py           # Main entry point (GUI + CLI)
+│   └── vidsim.py          # Thin wrapper around start.py (canonical name)
+├── TESTING_VIDEOS/        # Sample video files for quick testing
+├── environment.yaml       # Conda environment specification
 ├── README.md              # This file
-└── requirements.txt       # Python dependencies
+└── requirements.txt       # (legacy) pip dependencies
 ```
 
 Experiment outputs follow the pattern:
@@ -120,46 +122,86 @@ If you pass `--output-dir`, `<base>` becomes that directory; otherwise it is der
 
 ## Installation & Environment
 
+### Prerequisites
+- **Conda** (Miniconda or Anaconda) – [Install here](https://docs.conda.io/en/latest/miniconda.html)
+- **Git**
+
+### Setup Steps
+
 1. Clone and enter the project:
    ```bash
    git clone https://github.com/SamiGandhi/VidSim
    cd vidsim_
    ```
 
-2. Create & activate a virtual environment (recommended):
+2. Create and activate the conda environment:
    ```bash
-   python -m venv venv
-   # Windows
-   .\venv\Scripts\activate
-   # Linux/Mac
-   source venv/bin/activate
+   conda env create -f environment.yaml
+   conda activate vidsim
    ```
 
-3. Install dependencies:
+   This installs all dependencies (numpy, opencv-python, Pillow, matplotlib, pandas, tkinter, etc.) in an isolated environment.
+
+3. Verify installation:
    ```bash
-   pip install -r requirements.txt
+   python -m pip list | grep -E "opencv|numpy|pillow"
    ```
 
 4. Smoke test:
    ```bash
-   python vidsim.py --help
-   python vidsim.py core --help
+   python src/vidsim.py --help
+   python src/vidsim.py core --help
    ```
 
-> **Note**: Tkinter ships with CPython, but on Linux you might need `sudo apt install python3-tk`. BRISQUE relies on libsvm; the bundled `metrics/brisque/` folder must remain in place.
+> **Note**: Tkinter ships with the conda Python distribution. On Linux, if issues arise, run `conda install tk`.
+
+### Project Structure
+
+```
+vidsim_/
+├── src/                   # Main source code
+│   ├── core/              # Capture, encoding, decoding, utilities
+│   ├── metrics/           # Quality metrics & plotting helpers
+│   ├── models/            # Petri net / analytical models
+│   ├── ui/                # Tkinter front-end
+│   ├── res/               # Icons & static assets
+│   ├── start.py           # Main entry point (GUI + CLI)
+│   └── vidsim.py          # Thin wrapper around start.py (canonical name)
+├── TESTING_VIDEOS/        # Sample video files for quick testing
+├── environment.yaml       # Conda environment specification
+├── README.md              # This file
+└── requirements.txt       # (legacy) pip dependencies
+```
+
+Experiment outputs follow the pattern:
+
+```
+<base>/<height>x<width>/<PROFILE>/GOP_<value>/
+├── captured_frames/
+├── reference_frames/
+├── decoded/
+├── roi_frames/ (ROI mode)
+├── roi_masks/  (ROI mode)
+└── trace/
+    ├── st-frame     (encoding stats)
+    ├── st-packet    (packet logs)
+    └── rt-frame     (decoding metrics)
+```
+
+If you pass `--output-dir`, `<base>` becomes that directory; otherwise it is derived from the source video path.
 
 ---
 
 ## Entry Points
 
-| Command                      | Description                                                       |
-|------------------------------|-------------------------------------------------------------------|
-| `python vidsim.py`           | Launch GUI (default).                                             |
-| `python start.py`            | Same as above (alternate name).                                  |
-| `python vidsim.py ui`        | Explicit GUI mode + `--version` flag to print only the version.  |
-| `python vidsim.py core ...`  | CLI automation (see below).                                      |
+| Command                           | Description                                                       |
+|-----------------------------------|-------------------------------------------------------------------|
+| `python src/vidsim.py`            | Launch GUI (default).                                             |
+| `python src/start.py`             | Same as above (alternate name).                                  |
+| `python src/vidsim.py ui`         | Explicit GUI mode + `--version` flag to print only the version.  |
+| `python src/vidsim.py core ...`   | CLI automation (see below).                                      |
 
-`vidsim.py` simply imports `start.main()` to align with packaging conventions. If you bundle with PyInstaller, target `vidsim.py`.
+`vidsim.py` simply imports `start.main()` to align with packaging conventions. If you bundle with PyInstaller, target `src/vidsim.py`.
 
 ---
 
@@ -167,7 +209,7 @@ If you pass `--output-dir`, `<base>` becomes that directory; otherwise it is der
 
 Run:
 ```bash
-python vidsim.py
+python src/vidsim.py
 ```
 
 Features:
@@ -177,7 +219,7 @@ Features:
 - Embedded Matplotlib widgets (via `FigureCanvasTkAgg`) for inline visualization.
 - Status console using `ScrolledText` for logs.
 
-The GUI writes chosen parameters back to `core/parameters.py` at runtime, so CLI runs can reuse them.
+The GUI writes chosen parameters back to `src/core/parameters.py` at runtime, so CLI runs can reuse them.
 
 ---
 
@@ -186,7 +228,7 @@ The GUI writes chosen parameters back to `core/parameters.py` at runtime, so CLI
 ### Core Workflow
 
 ```bash
-python vidsim.py core \
+python src/vidsim.py core \
     --video-path input.mp4 \
     --method ROI \
     --quality-factor 75 \
@@ -207,7 +249,7 @@ Steps performed:
 If you already have captured frames / traces:
 
 ```bash
-python vidsim.py core \
+python src/vidsim.py core \
     --output-dir vir \
     --decode-only
 ```
@@ -219,7 +261,7 @@ The CLI automatically counts existing frames if `--video-path` is omitted.
 Generate dashboards for a previous experiment:
 
 ```bash
-python vidsim.py core \
+python src/vidsim.py core \
     --output-dir vir \
     --plots-only \
     --plots-dir vir/plots
@@ -241,13 +283,13 @@ python vidsim.py core \
 | `--decode`, `--decode-only` | Run decoder; optionally skip encoding. |
 | `--plots`, `--plots-only`, `--plots-dir` | Plot generation controls. |
 
-Run `python vidsim.py core --help` for the authoritative list (kept in sync with `start.py`).
+Run `python src/vidsim.py core --help` for the authoritative list (kept in sync with `src/start.py`).
 
 ---
 
 ## Configuration & Parameters
 
-All defaults live in `core/parameters.py`. Highlights:
+All defaults live in `src/core/parameters.py`. Highlights:
 
 | Group | Key Attributes |
 |-------|----------------|
@@ -328,22 +370,22 @@ It uses `networkx` + Matplotlib to draw the discrete-event model (places, transi
 
 ### Packaging (PyInstaller)
 
-Examples:
+Examples (from project root):
 
 ```bash
 # directory bundle (easier to debug)
-pyinstaller --name vidsim --onedir vidsim.py
+pyinstaller --name vidsim --onedir src/vidsim.py
 
 # single executable
-pyinstaller --name vidsim --onefile vidsim.py \
-  --add-data "ui;ui" --add-data "core;core" --add-data "metrics;metrics" --add-data "res;res" \
-  --icon=res/icon.png
+pyinstaller --name vidsim --onefile src/vidsim.py \
+  --add-data "src/ui;ui" --add-data "src/core;core" --add-data "src/metrics;metrics" --add-data "src/res;res" \
+  --icon=src/res/icon.png
 ```
 
 Guidelines:
 - Build on the target architecture (x86 vs x64).
 - Remember VC++ Redistributable requirements for OpenCV.
-- Use `resource_path()` helpers in code when opening files so PyInstaller’s `_MEIPASS` is respected.
+- Use `resource_path()` helpers in code when opening files so PyInstaller's `_MEIPASS` is respected.
 
 ```python
 def resource_path(rel_path):
@@ -352,9 +394,69 @@ def resource_path(rel_path):
     return os.path.join(base, rel_path)
 ```
 
-### Persistent Configurations
-- Save parameter presets as JSON/YAML and load them before running `start.main()` if needed.
-- For multiple experiments, script over `python vidsim.py core --output-dir run_<N> ...`.
+### Updating the Conda Environment
+If you add new dependencies, update `environment.yaml` and recreate:
+
+```bash
+conda env update -f environment.yaml --prune
+# or recreate from scratch:
+conda env remove -n vidsim
+conda env create -f environment.yaml
+```
+
+---
+
+## Test Videos
+
+The `TESTING_VIDEOS/` folder contains sample video files for quick testing and validation of the VidSim pipeline.
+
+### Available Test Videos
+
+Videos sourced from the **VIRAT Video Dataset** – "A Large-scale Benchmark Dataset for Event Recognition in Surveillance Video."
+
+| File | Resolution | FPS | Duration | Use Case |
+|------|------------|-----|----------|----------|
+| `VIRAT_S_010204_05_000856_000890.mp4` | 144×144 | 30 | ~1 second | Quick smoke tests; fastest encoding. Ideal for rapid iteration & debugging. |
+
+### Quick Start with Test Videos
+
+**Encode a test video with ROI and generate plots:**
+
+```bash
+python src/vidsim.py core \
+    --video-path "TESTING_VIDEOS\VIRAT_S_010204_05_000856_000890.mp4" \
+    --output-dir "TESTING_VIDEOS\vir" \
+    --method ROI \
+    --quality-factor 75 \
+    --decode \
+    --plots
+```
+
+**Decode-only (reuse previous captured frames):**
+
+```bash
+python src/vidsim.py core \
+    --output-dir "TESTING_VIDEOS\vir" \
+    --decode-only
+```
+
+**Generate plots for an existing experiment:**
+
+```bash
+python src/vidsim.py core \
+    --output-dir "TESTING_VIDEOS\vir\144X144\QF_75" \
+    --plots-only
+```
+
+### Tips
+- These test videos are compact (144p, ~1 second), making them ideal for rapid encoding/decoding cycles during development.
+- Use them to verify pipeline setup, test parameter changes, and validate packaging before processing larger datasets.
+- Results are stored in `TESTING_VIDEOS/vir/` to keep experiments isolated and reproducible.
+
+### Citation
+If you use the VIRAT dataset, please cite:
+
+> Oh, S., Hoogs, A., Perera, A., Cuntoor, N., Chen, C.-C., Lee, J. T., Mukherjee, S., Aggarwal, J.K., Lee, H., Davis, L., & others. (2011). *A Large-scale Benchmark Dataset for Event Recognition in Surveillance Video*. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 3153–3160. IEEE.
 
 ---
 
@@ -421,7 +523,12 @@ This project is released under the **MIT License**. See [LICENSE](LICENSE) for t
 The `TESTING_VIDEOS/` folder contains sample video file for quick testing and validation of the VidSim pipeline.
 
 ### Available Test Video
-Selected From "A Large-scale Benchmark Dataset for Event Recognition in Surveillance Video" By 
+This project uses a video clip (CID: 'VIRAT_S_010204_05_000856_000890') from the "A Large-scale Benchmark Dataset for Event Recognition in Surveillance Video" dataset.
+
+Please cite the original dataset paper when using this video clip:
+
+Oh, S., Hoogs, A., Perera, A., Cuntoor, N., Chen, C.-C., Lee, J. T., Mukherjee, S., Aggarwal, J.K., Lee, H., Davis, L., & others. (2011). *A Large-scale Benchmark Dataset for Event Recognition in Surveillance Video*. In Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 3153–3160. IEEE.
+
 
 | File | Resolution | FPS | Use Case |
 |------|------------|-----|----------|
@@ -433,7 +540,7 @@ Selected From "A Large-scale Benchmark Dataset for Event Recognition in Surveill
 Encode a test video and generate plots:
 
 ```bash
-python vidsim.py core \
+python src/vidsim.py core \
     --video-path "TESTING_VIDEOS\VIRAT_S_010204_05_000856_000890.mp4" \
     --output-dir "TESTING_VIDEOS\vir" \
     --method ROI \
@@ -445,7 +552,7 @@ python vidsim.py core \
 Decode-only (reusing previous captures):
 
 ```bash
-python vidsim.py core \
+python src/vidsim.py core \
     --output-dir "TESTING_VIDEOS\vir" \
     --decode-only
 ```
@@ -453,7 +560,7 @@ python vidsim.py core \
 Generate plots for an existing experiment:
 
 ```bash
-python vidsim.py core \
+python src/vidsim.py core \
     --output-dir "vir\144X144\QF_75" \
     --plots-only
 ```

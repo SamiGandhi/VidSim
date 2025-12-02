@@ -159,15 +159,15 @@ class VideoPlayer:
         self.controls_frame.grid_columnconfigure(1, weight=1)
         self.controls_frame.grid_columnconfigure(2, weight=1)
 
-        self.play_icon = ImageTk.PhotoImage(Image.open(r"res\play.png"))
+        self.play_icon = ImageTk.PhotoImage(Image.open(r"src\res\play.png"))
         self.btn_play = tk.Button(self.controls_frame, image=self.play_icon, width=30, height=30, command=self.play_video)
         self.btn_play.grid(row=0, column=0, padx=10, pady=10)
 
-        self.pause_icon = ImageTk.PhotoImage(Image.open(r"res\pause.png"))
+        self.pause_icon = ImageTk.PhotoImage(Image.open(r"src\res\pause.png"))
         self.btn_pause = tk.Button(self.controls_frame, image=self.pause_icon, width=30, height=30, command=self.pause_video)
         self.btn_pause.grid(row=0, column=1, padx=10, pady=10)
 
-        self.stop_icon = ImageTk.PhotoImage(Image.open(r"res\stop.png"))
+        self.stop_icon = ImageTk.PhotoImage(Image.open(r"src\res\stop.png"))
         self.btn_stop = tk.Button(self.controls_frame, image=self.stop_icon, width=30, height=30, command=self.stop_video)
         self.btn_stop.grid(row=0, column=2, padx=10, pady=10)
 
@@ -572,7 +572,7 @@ def init_root_view():
     # Main Window
     root = tk.Tk()
 
-    icon = tk.PhotoImage(file=r'res\icon.png')
+    icon = tk.PhotoImage(file=r'src\res\icon.png')
     root.iconphoto(True, icon)
     root.title("Set Parameters")
     tool_tip = Pmw.Balloon(root)
@@ -693,7 +693,7 @@ def colorize_text(text_widget, lines):
 def init_results_view():
     results_view = tk.Tk()
     results_view.title("Results")
-    icon = tk.PhotoImage(file=r'res\icon.png')
+    icon = tk.PhotoImage(file=r'src\res\icon.png')
     results_view.iconphoto(True, icon)
     tool_tip = Pmw.Balloon(results_view)
     notebook = ttk.Notebook(results_view)
